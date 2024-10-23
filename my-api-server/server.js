@@ -9,8 +9,8 @@ app.use(express.json());
 
 // Simple in-memory data store (array) for demonstration
 let items = [
-    { id: 1, name: 'Item One' },
-    { id: 2, name: 'Item Two' }
+    { id: 1, name: 'Ryan' },
+    { id: 2, name: 'Chang' }
 ];
 
 // GET all items
