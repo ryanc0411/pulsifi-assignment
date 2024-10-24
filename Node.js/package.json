@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest",                          // Run tests with Jest
-    "lint": "eslint ."                      // Lint the codebase using ESLint
+    "test": "jest",
+    "lint": "eslint ."
   },
   "keywords": [],
   "author": "",
