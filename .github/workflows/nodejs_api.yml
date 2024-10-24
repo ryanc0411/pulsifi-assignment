@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: nodejs  # Set default working directory for all steps
+        working-directory: Node.js  # Set default working directory for all steps
 
     steps:
       # Step 1: Checkout the code
