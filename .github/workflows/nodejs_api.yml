@@ -1,0 +1,45 @@
+# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
+# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
+
+name: CI/CD Pipeline for NodeJS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Node.js/**'  # Trigger only for changes in the 'nodejs' directory
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: nodejs  # Set default working directory for all steps
+
+    steps:
+      # Step 1: Checkout the code
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14' # or your required version
+
+      # Step 3: Install dependencies
+      - name: Install Dependencies
+        run: npm install
+
+      # Step 4: Run tests (quality checks)
+      - name: Run Tests
+        run: npm test
+
+      # Step 5: Linting (optional)
+      - name: Run Linter
+        run: npm run lint
+
+      # Step 6: Security checks (e.g., npm audit)
+      - name: Run Security Audit
+        run: npm audit
