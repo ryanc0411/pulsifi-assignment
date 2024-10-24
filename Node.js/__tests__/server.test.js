@@ -5,7 +5,13 @@ const createServer = require('../my-api-server/server'); // Adjust the path as n
 let app;
 
 beforeAll(() => {
-  app = createServer(); // Create the server instance
+    const instance = createServer();
+    app = instance.app;
+    server = instance.server; // Store the server instance
+});
+
+afterAll((done) => {
+  server.close(done); // Close the server after all tests
 });
 
 describe('Item API', () => {

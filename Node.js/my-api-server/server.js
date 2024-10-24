@@ -68,11 +68,11 @@ const createServer = () => {
 
     // Start the server on port 3000
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
     
-    return app; // Return the Express app for testing
+    return {app , server}; // Return the Express app for testing
 };
 
 // Check if the file is being executed directly
