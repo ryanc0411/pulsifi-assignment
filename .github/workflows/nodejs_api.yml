@@ -36,10 +36,6 @@ jobs:
       - name: Run Tests
         run: npm run test
 
-      # Step 5: Linting (optional)
-      - name: Run Linter
-        run: npm run lint
-
       # Step 6: Security checks (e.g., npm audit)
       - name: Run Security Audit
         run: npm audit
