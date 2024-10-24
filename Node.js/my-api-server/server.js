@@ -77,7 +77,7 @@ const createServer = () => {
 
 // Check if the file is being executed directly
 if (require.main === module) {
-    const app = createServer(); // Create an instance of the app
+    const app = createServer(); // call createServer function
 }
 
 module.exports = createServer;
