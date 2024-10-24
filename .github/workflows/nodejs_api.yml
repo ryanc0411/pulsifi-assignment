@@ -34,7 +34,7 @@ jobs:
 
       # Step 4: Run tests (quality checks)
       - name: Run Tests
-        run: npm test
+        run: npm run test
 
       # Step 5: Linting (optional)
       - name: Run Linter
