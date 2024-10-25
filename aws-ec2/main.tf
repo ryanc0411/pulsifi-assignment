@@ -24,13 +24,33 @@ resource "aws_security_group" "allow_ssh" {
   }
 }
 
+# Create a security group that allows node.js api call
+resource "aws_security_group" "allow_nodejs_api_call" {
+  name        = "allow_nodejs_api_call"
+  description = "Allow Nodejs Api Call inbound traffic"
+
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 # Create an EC2 instance
 resource "aws_instance" "ec2" {
   ami           = data.aws_ami.amazon_linux_23.id # Amazon Linux 2023 AMI ID
   instance_type = "t2.micro"              # Instance type (t2.micro is free tier eligible)
 
   key_name      = aws_key_pair.admin.key_name
-  security_groups = [aws_security_group.allow_ssh.name]
+  security_groups = [aws_security_group.allow_ssh.name,aws_security_group.allow_nodejs_api_call.name]
 
   user_data = <<-EOF
 #!/bin/bash
