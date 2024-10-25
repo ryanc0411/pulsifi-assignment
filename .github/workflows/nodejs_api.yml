@@ -9,8 +9,6 @@ on:
       - main
       - dev
       - release/*
-    paths:
-      - 'Node.js/**'  # Trigger only for changes in the 'nodejs' directory
 
 jobs:
   build:
