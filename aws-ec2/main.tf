@@ -32,6 +32,16 @@ resource "aws_instance" "ec2" {
   key_name      = aws_key_pair.admin.key_name
   security_groups = [aws_security_group.allow_ssh.name]
 
+  user_data = <<-EOF
+#!/bin/bash
+dnf update -y
+dnf install -y docker
+service docker start
+systemctl enable docker
+usermod -a -G docker ec2-user
+chkconfig docker on
+EOF
+
   tags = {
     Name = "MyExampleInstance"
   }
