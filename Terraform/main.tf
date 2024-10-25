@@ -26,7 +26,7 @@ resource "aws_security_group" "allow_ssh" {
 
 # Create an EC2 instance
 resource "aws_instance" "ec2" {
-  ami           = "ami-04b6019d38ea93034" # Amazon Linux 2023 AMI ID (change as needed)
+  ami           = data.aws_ami.amazon_linux_23.id # Amazon Linux 2023 AMI ID
   instance_type = "t2.micro"              # Instance type (t2.micro is free tier eligible)
 
   key_name      = aws_key_pair.admin.key_name

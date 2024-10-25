@@ -10,6 +10,6 @@ terraform {
 
 provider "aws" {
   region     = "ap-southeast-1"
-  access_key = var.cloud_creds.aws.access_key
-  secret_key = var.cloud_creds.aws.secret_key
+  access_key = var.aws_cloud_creds.access_key
+  secret_key = var.aws_cloud_creds.secret_key
 }
