@@ -88,7 +88,7 @@ jobs:
         id: ip_addresses
         run: |
           sudo apt-get install jq
-          export INSTANCE_IPS=$(aws ec2 describe-instances --output json --filters "Name=tag:$DEPLOY_TAG_NAME,Values=$DEPLOY_TAG_VALUE" | jq ".Reservations[].Instances[].PublicIpAddress" | paste -d, -s - | tr -d '"')
+          export INSTANCE_IPS=$(aws ec2 describe-instances --output json --filters "Name=tag:$EC2_TAG_NAME,Values=$EC2_TAG_VALUE" | jq ".Reservations[].Instances[].PublicIpAddress" | paste -d, -s - | tr -d '"')
           [ -z "$INSTANCE_IPS" ] && echo "No IPs found" && exit 1
           echo "INSTANCE_IPS=$INSTANCE_IPS"
           echo "INSTANCE_IPS=$INSTANCE_IPS" >> $GITHUB_OUTPUT
