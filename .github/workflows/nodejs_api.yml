@@ -94,7 +94,7 @@ jobs:
     needs: docker-build-and-push
     runs-on: ubuntu-latest
     environment: staging  # Define the env for sandbox
-    if: github.ref == 'refs/heads/release/*'
+    if: github.ref == 'refs/heads/staging'
 
     steps:
       - name: Add Staging SSH Key
