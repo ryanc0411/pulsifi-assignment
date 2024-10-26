@@ -8,7 +8,7 @@ on:
     branches:
       - main
       - dev
-      - release/*
+      - staging
 
 jobs:
   build:
