@@ -6,7 +6,7 @@ module "aws-ec2" {
   }
 
   region = "us-east-1"
-  env    = "staging"
+  env    = "production"
 
   ec2_configuration = {
     application_name = "node.js-api-call"
