@@ -1,3 +1,6 @@
+# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
+# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
+
 name: CI/CD Pipeline for NodeJS
 
 on:
@@ -6,10 +9,6 @@ on:
       - main
       - dev
       - release/*
-
-env: 
-  ENVIRONMENT: ${{ github.ref == 'refs/heads/dev' && 'sandbox' || github.ref == 'refs/heads/release/*' && 'staging' || github.ref == 'refs/heads/main' && 'production' || 'none' }}
-
 
 jobs:
   build:
@@ -62,37 +61,31 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.ENVIRONMENT }} .
-          docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.ENVIRONMENT }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ github.ref_name }} .
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ github.ref_name }}
 
-  deploy-nodejs-to-ecs:
+  deploy-sandbox:
     needs: docker-build-and-push
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        env: *env_matrix  # Reference the anchor for the matrix
-
-    # Conditionally apply the correct environment based on branch
-    environment: ${{ env.ENVIRONMENT }}
+    environment: sandbox  # Define the env for sandbox
+    if: github.ref == 'refs/heads/dev'
 
     steps:
-      - name: Add ${{ env.ENVIRONMENT }} SSH Key
+      - name: Add Sandbox SSH Key
         run: |
-          echo "${{ secrets[format('{0}_EC2_SSH_KEY', env.ENVIRONMENT) ] }}" | base64 --decode > /tmp/${{env.ENVIRONMENT}}-ec2-key.pem
-          chmod 600 /tmp/${{env.ENVIRONMENT}}-ec2-key.pem
+          echo "${{ secrets.SANDBOX_EC2_SSH_KEY }}" | base64 --decode > /tmp/sandbox-ec2-key.pem
+          chmod 600 /tmp/sandbox-ec2-key.pem
 
-      - name: Deploy to ${{ env.ENVIRONMENT }}
+      - name: Deploy to Sandbox
         env:
-          EC2_USER: ${{ secrets[format('{0}_EC2_USER', env.ENVIRONMENT)] }}
-          EC2_HOST: ${{ secrets[format('{0}_EC2_HOST', env.ENVIRONMENT)] }}
-          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.ENVIRONMENT }}"
+          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ github.ref_name }}"
         run: |
-          ssh -o StrictHostKeyChecking=no -i /tmp/${{env.ENVIRONMENT}}-ec2-key.pem $EC2_USER@$EC2_HOST "
+          ssh -o StrictHostKeyChecking=no -i /tmp/sandbox-ec2-key.pem ${{ secrets.SANDBOX_EC2_USER }}@${{ secrets.SANDBOX_EC2_HOST }} "
             docker pull $DOCKER_IMAGE && \
             docker stop nodejs-app || true && \
             docker rm nodejs-app || true && \
             docker run -d --name nodejs-app -p 3000:3000 $DOCKER_IMAGE
           "
 
-      - name: Cleanup ${{env.ENVIRONMENT}} SSH Key
-        run: rm /tmp/${{env.ENVIRONMENT}}-ec2-key.pem
+      - name: Cleanup Sandbox SSH Key
+        run: rm /tmp/sandbox-ec2-key.pem
