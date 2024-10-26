@@ -65,7 +65,7 @@ chkconfig docker on
 EOF
 
   tags = {
-    Name = "${var.ec2_configuration.application_name}-${tostring(count.index)}"
+    Name = "${var.ec2_configuration.application_name}-${var.env}-${tostring(count.index)}"
     Environment = var.env
   }
 }

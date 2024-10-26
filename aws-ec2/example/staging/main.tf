@@ -6,7 +6,7 @@ module "aws-ec2" {
     }
 
   region = "ap-southeast-1"
-	env = "sandbox"
+	env = "staging"
 
 	ec2_configuration = {
 		application_name = "node.js-api-call"

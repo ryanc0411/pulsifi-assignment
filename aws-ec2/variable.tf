@@ -7,6 +7,11 @@ variable "aws_cloud_creds" {
     })
 }
 
+variable "region" {
+  description = "Region of aws."
+  type        = string
+}
+
 variable "env" {
   description = "Enviornment."
   type        = string
