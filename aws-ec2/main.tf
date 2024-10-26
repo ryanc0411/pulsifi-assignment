@@ -46,10 +46,12 @@ resource "aws_security_group" "allow_nodejs_api_call" {
 
 # Create an EC2 instance
 resource "aws_instance" "ec2" {
-  ami           = data.aws_ami.amazon_linux_23.id # Amazon Linux 2023 AMI ID
-  instance_type = "t2.micro"              # Instance type (t2.micro is free tier eligible)
+  count = var.ec2_configuration.no_of_instances
 
-  key_name      = aws_key_pair.admin.key_name
+  ami           = var.ec2_configuration.ami == "" ? data.aws_ami.amazon_linux_23.id : var.ec2_configuration.ami # Amazon Linux 2023 AMI ID
+  instance_type = var.ec2_configuration.instance_type    # Instance type (t2.micro is free tier eligible)
+
+  key_name        = aws_key_pair.admin.key_name
   security_groups = [aws_security_group.allow_ssh.name,aws_security_group.allow_nodejs_api_call.name]
 
   user_data = <<-EOF
@@ -63,6 +65,7 @@ chkconfig docker on
 EOF
 
   tags = {
-    Name = "MyExampleInstance"
+    Name = "${var.ec2_configuration.application_name}-${tostring(count.index)}"
+    Environment = var.env
   }
 }
