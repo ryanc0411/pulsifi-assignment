@@ -10,6 +10,10 @@ on:
       - dev
       - release/*
 
+env: 
+  ENVIRONMENT: ${{ github.ref == 'refs/heads/dev' && 'sandbox' || github.ref == 'refs/heads/release/*' && 'staging' || github.ref == 'refs/heads/main' && 'production' || 'none' }}
+
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,15 +47,6 @@ jobs:
   docker-build-and-push:
     runs-on: ubuntu-latest
     needs: build
-    strategy:
-      matrix:
-        env: &env_matrix
-        - environment: sandbox
-          branch: dev
-        - environment: staging
-          branch: 'release/*'
-        - environment: production
-          branch: main
     defaults:
       run:
         working-directory: Node.js  # Set default working directory for all steps
@@ -70,8 +65,8 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ matrix.env.environment }} .
-          docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ matrix.env.environment }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.ENVIRONMENT }} .
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.ENVIRONMENT }}
 
   deploy-nodejs-to-ecs:
     needs: docker-build-and-push
@@ -81,23 +76,19 @@ jobs:
         env: *env_matrix  # Reference the anchor for the matrix
 
     # Conditionally apply the correct environment based on branch
-    environment: ${{ matrix.env.environment }}
-
-    # Define job-level environment variables, including Docker image
-    env:
-      ENVIRONMENT: ${{ matrix.environment }}
+    environment: ${{ env.ENVIRONMENT }}
 
     steps:
-      - name: Add ${{ env.environment }} SSH Key
+      - name: Add ${{ env.ENVIRONMENT }} SSH Key
         run: |
           echo "${{ secrets[format('{0}_EC2_SSH_KEY', env.ENVIRONMENT) ] }}" | base64 --decode > /tmp/${{env.ENVIRONMENT}}-ec2-key.pem
           chmod 600 /tmp/${{env.ENVIRONMENT}}-ec2-key.pem
 
-      - name: Deploy to ${{ env.environment }}
+      - name: Deploy to ${{ env.ENVIRONMENT }}
         env:
           EC2_USER: ${{ secrets[format('{0}_EC2_USER', env.ENVIRONMENT)] }}
           EC2_HOST: ${{ secrets[format('{0}_EC2_HOST', env.ENVIRONMENT)] }}
-          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.environment }}"
+          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.ENVIRONMENT }}"
         run: |
           ssh -o StrictHostKeyChecking=no -i /tmp/${{env.ENVIRONMENT}}-ec2-key.pem $EC2_USER@$EC2_HOST "
             docker pull $DOCKER_IMAGE && \
