@@ -64,8 +64,8 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.my_env }} .
-          docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.my_env }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.my_env == 'production' && 'latest' || env.my_env }} .
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.my_env == 'production' && 'latest' || env.my_env }}
 
   deploy-to-aws-ec2:
     needs: docker-build-and-push
@@ -93,10 +93,10 @@ jobs:
           echo "INSTANCE_IPS=$INSTANCE_IPS"
           echo "INSTANCE_IPS=$INSTANCE_IPS" >> $GITHUB_OUTPUT
 
-      - name: Deploy NodeJs to EC2
+      - name: Deploy Node.Js to EC2
         env:
           INSTANCE_IPS: ${{ steps.ip_addresses.outputs.INSTANCE_IPS }}
-          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.my_env }}"
+          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.my_env == 'production' && 'latest' || env.my_env }}"
         run: |
           for IP in ${INSTANCE_IPS//,/$'\n'}
           do
