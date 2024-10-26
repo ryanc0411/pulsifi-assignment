@@ -10,6 +10,9 @@ on:
       - dev
       - staging
 
+env:
+  my_env: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/dev' && 'sandbox' || github.ref == 'refs/heads/staging' && 'staging' || 'none' }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -61,57 +64,56 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ github.ref_name }} .
-          docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ github.ref_name }}
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.my_env }} .
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ env.my_env }}
 
-  deploy-sandbox:
+  deploy-to-aws-ec2:
     needs: docker-build-and-push
     runs-on: ubuntu-latest
-    environment: sandbox  # Define the env for sandbox
-    if: github.ref == 'refs/heads/dev'
+    environment: ${{ env.my_env }} # Define the env for sandbox/staging/production
 
     steps:
       - name: Add Sandbox SSH Key
         run: |
-          echo "${{ secrets.SANDBOX_EC2_SSH_KEY }}" | base64 --decode > /tmp/sandbox-ec2-key.pem
-          chmod 600 /tmp/sandbox-ec2-key.pem
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > /tmp/ec2-key.pem
+          chmod 600 /tmp/ec2-key.pem
 
       - name: Deploy to Sandbox
         env:
           DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ github.ref_name }}"
         run: |
-          ssh -o StrictHostKeyChecking=no -i /tmp/sandbox-ec2-key.pem ${{ secrets.SANDBOX_EC2_USER }}@${{ secrets.SANDBOX_EC2_HOST }} "
+          ssh -o StrictHostKeyChecking=no -i /tmp/ec2-key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
             docker pull $DOCKER_IMAGE && \
             docker stop nodejs-app || true && \
             docker rm nodejs-app || true && \
             docker run -d --name nodejs-app -p 3000:3000 $DOCKER_IMAGE
           "
 
-      - name: Cleanup Sandbox SSH Key
-        run: rm /tmp/sandbox-ec2-key.pem
+      - name: Cleanup SSH Key
+        run: rm /tmp/ec2-key.pem
 
-  deploy-staging:
-    needs: docker-build-and-push
-    runs-on: ubuntu-latest
-    environment: staging  # Define the env for sandbox
-    if: github.ref == 'refs/heads/staging'
+  # deploy-staging:
+  #   needs: docker-build-and-push
+  #   runs-on: ubuntu-latest
+  #   environment: staging  # Define the env for sandbox
+  #   if: github.ref == 'refs/heads/staging'
 
-    steps:
-      - name: Add Staging SSH Key
-        run: |
-          echo "${{ secrets.STAGING_EC2_SSH_KEY }}" | base64 --decode > /tmp/staging-ec2-key.pem
-          chmod 600 /tmp/staging-ec2-key.pem
+  #   steps:
+  #     - name: Add Staging SSH Key
+  #       run: |
+  #         echo "${{ secrets.STAGING_EC2_SSH_KEY }}" | base64 --decode > /tmp/staging-ec2-key.pem
+  #         chmod 600 /tmp/staging-ec2-key.pem
 
-      - name: Deploy to Staging
-        env:
-          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ github.ref_name }}"
-        run: |
-          ssh -o StrictHostKeyChecking=no -i /tmp/staging-ec2-key.pem ${{ secrets.STAGING_EC2_USER }}@${{ secrets.STAGING_EC2_HOST }} "
-            docker pull $DOCKER_IMAGE && \
-            docker stop nodejs-app || true && \
-            docker rm nodejs-app || true && \
-            docker run -d --name nodejs-app -p 3000:3000 $DOCKER_IMAGE
-          "
+  #     - name: Deploy to Staging
+  #       env:
+  #         DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ github.ref_name }}"
+  #       run: |
+  #         ssh -o StrictHostKeyChecking=no -i /tmp/staging-ec2-key.pem ${{ secrets.STAGING_EC2_USER }}@${{ secrets.STAGING_EC2_HOST }} "
+  #           docker pull $DOCKER_IMAGE && \
+  #           docker stop nodejs-app || true && \
+  #           docker rm nodejs-app || true && \
+  #           docker run -d --name nodejs-app -p 3000:3000 $DOCKER_IMAGE
+  #         "
 
-      - name: Cleanup Staging SSH Key
-        run: rm /tmp/staging-ec2-key.pem
+  #     - name: Cleanup Staging SSH Key
+  #       run: rm /tmp/staging-ec2-key.pem
