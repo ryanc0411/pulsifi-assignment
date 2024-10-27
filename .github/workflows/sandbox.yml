@@ -10,3 +10,4 @@ jobs:
     uses: ./.github/workflows/reusable-workflow.yml
     with:
       env: "sandbox"
+    secrets: inherit 
