@@ -33,4 +33,13 @@ jobs:
     uses: ./.github/workflows/reusable-workflow.yml
     with:
       my_env: "sandbox"
-    secrets: inherit # Inherit all secrets from the Development Workflow
+    secrets: 
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.SANDBOX_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SANDBOX_AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.SANDBOX_AWS_DEFAULT_REGION }}
+      EC2_TAG_NAME: ${{ secrets.SANDBOX_EC2_TAG_NAME }}
+      EC2_TAG_VALUE: ${{ secrets.SANDBOX_EC2_TAG_VALUE }}
+      EC2_USER: ${{ secrets.SANDBOX_EC2_USER }}
+      EC2_SSH_KEY: ${{ secrets.SANDBOX_EC2_SSH_KEY }}

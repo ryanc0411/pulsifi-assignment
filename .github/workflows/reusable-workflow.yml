@@ -7,6 +7,25 @@ on:
         description: "Environment for deployment (e.g., sandbox, staging, production)"
         required: true
         type: string
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+      EC2_SSH_KEY:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_DEFAULT_REGION:
+        required: true
+      EC2_TAG_NAME:
+        required: true
+      EC2_TAG_VALUE:
+        required: true
+      EC2_USER:
+        required: true
 
 jobs:
   build:
@@ -62,7 +81,6 @@ jobs:
   deploy-to-aws-ec2:
     needs: docker-build-and-push
     runs-on: ubuntu-latest
-    environment: ${{ inputs.my_env }}
 
     steps:
       - name: Add Private SSH Key to SSH to EC2 instances
