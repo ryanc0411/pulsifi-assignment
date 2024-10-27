@@ -101,6 +101,7 @@ jobs:
           export INSTANCE_IPS=$(aws ec2 describe-instances --output json --filters "Name=tag:$EC2_TAG_NAME,Values=$EC2_TAG_VALUE" | jq ".Reservations[].Instances[].PublicIpAddress" | paste -d, -s - | tr -d '"')
           [ -z "$INSTANCE_IPS" ] && echo "No IPs found" && exit 1
           echo "INSTANCE_IPS=$INSTANCE_IPS" >> $GITHUB_ENV
+          echo "$INSTANCE_IPS"
 
       - name: Deploy Node.js to EC2
         env:
