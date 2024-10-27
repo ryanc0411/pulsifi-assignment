@@ -110,7 +110,7 @@ jobs:
         run: |
           for IP in ${INSTANCE_IPS//,/$'\n'}
           do
-          ssh -o StrictHostKeyChecking=no -i /tmp/ec2-key.pem ${{ secrets.RW_EC2_USER }}@$IP "
+          ssh -o StrictHostKeyChecking=no -i /tmp/ec2-key.pem ${{ secrets.RW_EC2_USER }}@${IP} "
             docker pull $DOCKER_IMAGE && \
             docker stop nodejs-app || true && \
             docker rm nodejs-app || true && \
