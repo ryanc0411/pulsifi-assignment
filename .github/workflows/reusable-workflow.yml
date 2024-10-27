@@ -1,0 +1,122 @@
+name: Reusable Workflow
+
+on:
+  workflow_call:
+    inputs:
+      my_env:
+        description: "Environment for deployment (e.g., sandbox, staging, production)"
+        required: true
+        type: string
+    secrets:
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
+    #   EC2_SSH_KEY:
+    #     required: true
+    #   AWS_ACCESS_KEY_ID:
+    #     required: true
+    #   AWS_SECRET_ACCESS_KEY:
+    #     required: true
+    #   AWS_DEFAULT_REGION:
+    #     required: true
+    #   EC2_TAG_NAME:
+    #     required: true
+    #   EC2_TAG_VALUE:
+    #     required: true
+    #   EC2_USER:
+    #     required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Node.js
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm run test
+
+      - name: Run Security Audit
+        run: npm audit
+
+  docker-build-and-push:
+    runs-on: ubuntu-latest
+    needs: build
+    defaults:
+      run:
+        working-directory: Node.js
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        env:
+          IMAGE_TAG: ${{ inputs.my_env == 'production' && 'latest' || inputs.my_env }}
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${IMAGE_TAG} .
+          docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${IMAGE_TAG}
+
+  deploy-to-aws-ec2:
+    needs: docker-build-and-push
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.my_env }}
+
+    steps:
+      - name: Add Private SSH Key to SSH to EC2 instances
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > /tmp/ec2-key.pem
+          chmod 600 /tmp/ec2-key.pem
+
+      - name: Get IP addresses of AWS EC2 instances
+        id: ip_addresses
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          EC2_TAG_NAME: ${{ secrets.EC2_TAG_NAME }}
+          EC2_TAG_VALUE: ${{ secrets.EC2_TAG_VALUE }}
+        run: |
+          sudo apt-get install -y jq
+          export INSTANCE_IPS=$(aws ec2 describe-instances --output json --filters "Name=tag:$EC2_TAG_NAME,Values=$EC2_TAG_VALUE" | jq ".Reservations[].Instances[].PublicIpAddress" | paste -d, -s - | tr -d '"')
+          [ -z "$INSTANCE_IPS" ] && echo "No IPs found" && exit 1
+          echo "INSTANCE_IPS=$INSTANCE_IPS" >> $GITHUB_ENV
+
+      - name: Deploy Node.js to EC2
+        env:
+          INSTANCE_IPS: ${{ steps.ip_addresses.outputs.INSTANCE_IPS }}
+          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ inputs.my_env == 'production' && 'latest' || inputs.my_env }}"
+        run: |
+          for IP in ${INSTANCE_IPS//,/$'\n'}
+          do
+          ssh -o StrictHostKeyChecking=no -i /tmp/ec2-key.pem ${{ secrets.EC2_USER }}@$IP "
+            docker pull $DOCKER_IMAGE && \
+            docker stop nodejs-app || true && \
+            docker rm nodejs-app || true && \
+            docker run -d --name nodejs-app -p 3000:3000 $DOCKER_IMAGE
+          "
+          done
+
+      - name: Cleanup SSH Key
+        run: rm /tmp/ec2-key.pem
