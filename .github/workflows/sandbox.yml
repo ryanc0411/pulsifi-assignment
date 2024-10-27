@@ -9,17 +9,25 @@ jobs:
   get-secret-from-environment-secret:
     runs-on: ubuntu-latest
     environment: sandbox
+    outputs:
+      AWS_ACCESS_KEY_ID: ${{ steps.set-secrets.outputs.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ steps.set-secrets.outputs.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ steps.set-secrets.outputs.AWS_DEFAULT_REGION }}
+      EC2_TAG_NAME: ${{ steps.set-secrets.outputs.EC2_TAG_NAME }}
+      EC2_TAG_VALUE: ${{ steps.set-secrets.outputs.EC2_TAG_VALUE }}
+      EC2_USER: ${{ steps.set-secrets.outputs.EC2_USER }}
+      EC2_SSH_KEY: ${{ steps.set-secrets.outputs.EC2_SSH_KEY }}   
     steps:
-      - name: Set Multiple Secrets to GITHUB_ENV
+      - name: Set Multiple Secrets to GITHUB_OUTPUT
         id: set-secrets
         run: |
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-          echo "AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}" >> $GITHUB_ENV
-          echo "EC2_TAG_NAME=${{ secrets.EC2_TAG_NAME }}" >> $GITHUB_ENV
-          echo "EC2_TAG_VALUE=${{ secrets.EC2_TAG_VALUE }}" >> $GITHUB_ENV
-          echo "EC2_USER=${{ secrets.EC2_USER }}" >> $GITHUB_ENV
-          echo "EC2_SSH_KEY=${{ secrets.EC2_SSH_KEY }}" >> $GITHUB_ENV
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+          echo "AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }}" >> $GITHUB_OUTPUT
+          echo "EC2_TAG_NAME=${{ secrets.EC2_TAG_NAME }}" >> $GITHUB_OUTPUT
+          echo "EC2_TAG_VALUE=${{ secrets.EC2_TAG_VALUE }}" >> $GITHUB_OUTPUT
+          echo "EC2_USER=${{ secrets.EC2_USER }}" >> $GITHUB_OUTPUT
+          echo "EC2_SSH_KEY=${{ secrets.EC2_SSH_KEY }}" >> $GITHUB_OUTPUT
 
 
   call-reusable-workflow:
@@ -30,10 +38,10 @@ jobs:
     secrets:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }} 
-      AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-      AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
-      AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
-      EC2_TAG_NAME: $EC2_TAG_NAME
-      EC2_TAG_VALUE: $EC2_TAG_VALUE
-      EC2_USER: $EC2_USER
-      EC2_SSH_KEY: $EC2_SSH_KEY
+      AWS_ACCESS_KEY_ID: ${{ needs.get-secret-from-environment-secret.outputs.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ needs.get-secret-from-environment-secret.outputs.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ needs.get-secret-from-environment-secret.outputs.AWS_DEFAULT_REGION }}
+      EC2_TAG_NAME: ${{ needs.get-secret-from-environment-secret.outputs.EC2_TAG_NAME }}
+      EC2_TAG_VALUE: ${{ needs.get-secret-from-environment-secret.outputs.EC2_TAG_VALUE }}
+      EC2_USER: ${{ needs.get-secret-from-environment-secret.outputs.EC2_USER }}
+      EC2_SSH_KEY: ${{ needs.get-secret-from-environment-secret.outputs.EC2_SSH_KEY }}

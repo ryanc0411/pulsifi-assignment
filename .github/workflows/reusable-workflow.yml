@@ -97,7 +97,6 @@ jobs:
           EC2_TAG_NAME: ${{ secrets.EC2_TAG_NAME }}
           EC2_TAG_VALUE: ${{ secrets.EC2_TAG_VALUE }}
         run: |
-          echo $AWS_ACCESS_KEY_ID $AWS_SECRET_ACCESS_KEY $AWS_DEFAULT_REGION $EC2_TAG_NAME $EC2_TAG_VALUE
           sudo apt-get install -y jq
           export INSTANCE_IPS=$(aws ec2 describe-instances --output json --filters "Name=tag:$EC2_TAG_NAME,Values=$EC2_TAG_VALUE" | jq ".Reservations[].Instances[].PublicIpAddress" | paste -d, -s - | tr -d '"')
           [ -z "$INSTANCE_IPS" ] && echo "No IPs found" && exit 1
