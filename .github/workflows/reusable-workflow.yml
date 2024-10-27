@@ -3,7 +3,7 @@ name: Reusable Workflow
 on:
   workflow_call:
     inputs:
-      my_env:
+      env:
         description: "Environment for deployment (e.g., sandbox, staging, production)"
         required: true
         type: string
@@ -54,7 +54,7 @@ jobs:
 
       - name: Build and Push Docker Image
         env:
-          IMAGE_TAG: ${{ inputs.my_env == 'production' && 'latest' || inputs.my_env }}
+          IMAGE_TAG: ${{ inputs.env == 'production' && 'latest' || inputs.env }}
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/my-api-server:${IMAGE_TAG} .
           docker push ${{ secrets.DOCKER_USERNAME }}/my-api-server:${IMAGE_TAG}
@@ -62,7 +62,7 @@ jobs:
   deploy-to-aws-ec2:
     needs: docker-build-and-push
     runs-on: ubuntu-latest
-    environment: ${{ inputs.my_env }}
+    environment: ${{ inputs.env }}
 
     steps:
       - name: Add Private SSH Key to SSH to EC2 instances
@@ -88,7 +88,7 @@ jobs:
       - name: Deploy Node.js to EC2
         env:
           INSTANCE_IPS: ${{ steps.ip_addresses.outputs.INSTANCE_IPS }}
-          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ inputs.my_env == 'production' && 'latest' || inputs.my_env }}"
+          DOCKER_IMAGE: "${{ secrets.DOCKER_USERNAME }}/my-api-server:${{ inputs.env == 'production' && 'latest' || inputs.env }}"
         run: |
           for IP in ${INSTANCE_IPS//,/$'\n'}
           do
