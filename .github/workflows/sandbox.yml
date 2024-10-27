@@ -35,4 +35,4 @@ jobs:
     needs: get-secret-from-environment-secret
     with:
       my_env: "sandbox"
-    secrets: inherit
+    secrets: inherit # Inherit all secrets from the Development Workflow
