@@ -12,19 +12,19 @@ on:
         required: true
       DOCKER_PASSWORD:
         required: true
-      EC2_SSH_KEY:
+      RW_EC2_SSH_KEY:
         required: true
-      AWS_ACCESS_KEY_ID:
+      RW_AWS_ACCESS_KEY_ID:
         required: true
-      AWS_SECRET_ACCESS_KEY:
+      RW_AWS_SECRET_ACCESS_KEY:
         required: true
-      AWS_DEFAULT_REGION:
+      RW_AWS_DEFAULT_REGION:
         required: true
-      EC2_TAG_NAME:
+      RW_EC2_TAG_NAME:
         required: true
-      EC2_TAG_VALUE:
+      RW_EC2_TAG_VALUE:
         required: true
-      EC2_USER:
+      RW_EC2_USER:
         required: true
 
 jobs:
@@ -85,17 +85,17 @@ jobs:
     steps:
       - name: Add Private SSH Key to SSH to EC2 instances
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > /tmp/ec2-key.pem
+          echo "${{ secrets.RW_EC2_SSH_KEY }}" | base64 --decode > /tmp/ec2-key.pem
           chmod 600 /tmp/ec2-key.pem
 
       - name: Get IP addresses of AWS EC2 instances
         id: ip_addresses
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-          EC2_TAG_NAME: ${{ secrets.EC2_TAG_NAME }}
-          EC2_TAG_VALUE: ${{ secrets.EC2_TAG_VALUE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.RW_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.RW_AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.RW_AWS_DEFAULT_REGION }}
+          EC2_TAG_NAME: ${{ secrets.RW_EC2_TAG_NAME }}
+          EC2_TAG_VALUE: ${{ secrets.RW_EC2_TAG_VALUE }}
         run: |
           sudo apt-get install -y jq
           export INSTANCE_IPS=$(aws ec2 describe-instances --output json --filters "Name=tag:$EC2_TAG_NAME,Values=$EC2_TAG_VALUE" | jq ".Reservations[].Instances[].PublicIpAddress" | paste -d, -s - | tr -d '"')
@@ -109,7 +109,7 @@ jobs:
         run: |
           for IP in ${INSTANCE_IPS//,/$'\n'}
           do
-          ssh -o StrictHostKeyChecking=no -i /tmp/ec2-key.pem ${{ secrets.EC2_USER }}@$IP "
+          ssh -o StrictHostKeyChecking=no -i /tmp/ec2-key.pem ${{ secrets.RW_EC2_USER }}@$IP "
             docker pull $DOCKER_IMAGE && \
             docker stop nodejs-app || true && \
             docker rm nodejs-app || true && \
