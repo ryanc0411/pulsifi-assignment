@@ -35,13 +35,4 @@ jobs:
     needs: get-secret-from-environment-secret
     with:
       my_env: "sandbox"
-    secrets:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }} 
-      AWS_ACCESS_KEY_ID: ${{ needs.get-secret-from-environment-secret.outputs.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ needs.get-secret-from-environment-secret.outputs.AWS_SECRET_ACCESS_KEY }}
-      AWS_DEFAULT_REGION: ${{ needs.get-secret-from-environment-secret.outputs.AWS_DEFAULT_REGION }}
-      EC2_TAG_NAME: ${{ needs.get-secret-from-environment-secret.outputs.EC2_TAG_NAME }}
-      EC2_TAG_VALUE: ${{ needs.get-secret-from-environment-secret.outputs.EC2_TAG_VALUE }}
-      EC2_USER: ${{ needs.get-secret-from-environment-secret.outputs.EC2_USER }}
-      EC2_SSH_KEY: ${{ needs.get-secret-from-environment-secret.outputs.EC2_SSH_KEY }}
+    secrets: inherit
