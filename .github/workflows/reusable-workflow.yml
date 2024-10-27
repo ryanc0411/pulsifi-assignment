@@ -7,25 +7,6 @@ on:
         description: "Environment for deployment (e.g., sandbox, staging, production)"
         required: true
         type: string
-    secrets:
-      DOCKER_USERNAME:
-        required: true
-      DOCKER_PASSWORD:
-        required: true
-      RW_EC2_SSH_KEY:
-        required: true
-      RW_AWS_ACCESS_KEY_ID:
-        required: true
-      RW_AWS_SECRET_ACCESS_KEY:
-        required: true
-      RW_AWS_DEFAULT_REGION:
-        required: true
-      RW_EC2_TAG_NAME:
-        required: true
-      RW_EC2_TAG_VALUE:
-        required: true
-      RW_EC2_USER:
-        required: true
 
 jobs:
   build:
@@ -81,26 +62,27 @@ jobs:
   deploy-to-aws-ec2:
     needs: docker-build-and-push
     runs-on: ubuntu-latest
+    environment: ${{ inputs.my_env }}
 
     steps:
       - name: Add Private SSH Key to SSH to EC2 instances
         run: |
-          echo "${{ secrets.RW_EC2_SSH_KEY }}" | base64 --decode > /tmp/ec2-key.pem
+          echo "${{ secrets.EC2_SSH_KEY }}" | base64 --decode > /tmp/ec2-key.pem
           chmod 600 /tmp/ec2-key.pem
 
       - name: Get IP addresses of AWS EC2 instances
         id: ip_addresses
         env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.RW_AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.RW_AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ secrets.RW_AWS_DEFAULT_REGION }}
-          EC2_TAG_NAME: ${{ secrets.RW_EC2_TAG_NAME }}
-          EC2_TAG_VALUE: ${{ secrets.RW_EC2_TAG_VALUE }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          EC2_TAG_NAME: ${{ secrets.EC2_TAG_NAME }}
+          EC2_TAG_VALUE: ${{ secrets.EC2_TAG_VALUE }}
         run: |
           sudo apt-get install -y jq
           export INSTANCE_IPS=$(aws ec2 describe-instances --output json --filters "Name=tag:$EC2_TAG_NAME,Values=$EC2_TAG_VALUE" | jq ".Reservations[].Instances[].PublicIpAddress" | paste -d, -s - | tr -d '"')
           [ -z "$INSTANCE_IPS" ] && echo "No IPs found" && exit 1
-          echo "INSTANCE_IPS=$INSTANCE_IPS" >> $GITHUB_ENV
+          echo "INSTANCE_IPS=$INSTANCE_IPS" >> $GITHUB_OUTPUT
           echo "$INSTANCE_IPS"
 
       - name: Deploy Node.js to EC2
@@ -110,7 +92,7 @@ jobs:
         run: |
           for IP in ${INSTANCE_IPS//,/$'\n'}
           do
-          ssh -o StrictHostKeyChecking=no -i /tmp/ec2-key.pem ${{ secrets.RW_EC2_USER }}@${IP} "
+          ssh -o StrictHostKeyChecking=no -i /tmp/ec2-key.pem ${{ secrets.EC2_USER }}@${IP} "
             docker pull $DOCKER_IMAGE && \
             docker stop nodejs-app || true && \
             docker rm nodejs-app || true && \
