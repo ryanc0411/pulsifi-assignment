@@ -1,0 +1,21 @@
+name: Main Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  staging-deploy:
+    uses: ./.github/workflows/reusable-workflow.yml
+    with:
+      env: "staging"
+    secrets: inherit
+  
+  production-deploy:
+    needs: staging-deploy
+    uses: ./.github/workflows/reusable-workflow.yml
+    with:
+      env: "production"
+    secrets: inherit
+  

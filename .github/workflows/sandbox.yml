@@ -1,0 +1,13 @@
+name: Development Workflow
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  dev_deploy:
+    uses: ./.github/workflows/reusable-workflow.yml
+    with:
+      env: "sandbox"
+    secrets: inherit 
