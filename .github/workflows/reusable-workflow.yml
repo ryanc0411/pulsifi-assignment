@@ -40,7 +40,7 @@ jobs:
       run:
         working-directory: Node.js
     steps:
-      - name: Checkout Repository
+      - name: Checkout Repositories
         uses: actions/checkout@v4.2.2
 
       - name: Set up Docker Buildx
