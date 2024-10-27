@@ -62,6 +62,7 @@ jobs:
   deploy-to-aws-ec2:
     needs: docker-build-and-push
     runs-on: ubuntu-latest
+    environment: ${{ inputs.my_env }}
 
     steps:
       - name: Add Private SSH Key to SSH to EC2 instances
